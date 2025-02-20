@@ -1,14 +1,11 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { AuthModule } from './auth/auth.module';
-import { AuthController } from './auth/auth.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from './user/user.entity';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
 @Module({
-  imports: [AuthModule, 
+  imports: [ 
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: ['.env', '../.env']
@@ -23,12 +20,12 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
         username: configService.get<string>("PG_USER"),
         password: configService.get<string>("PG_PASSWORD"),
         database: configService.get<string>("PG_USER_DB"),
-        entities: [User],
+        entities: [],
         synchronize: true,
       })
     }),
   ],
-  controllers: [AppController, AuthController],
+  controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule {}

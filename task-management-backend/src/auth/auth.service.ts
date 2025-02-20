@@ -1,4 +1,4 @@
-import { Body, HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { Body, HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
 import { randomBytes } from 'crypto';
 import * as jose from 'jose';
 import bcrypt from 'bcryptjs';
@@ -57,6 +57,29 @@ export class AuthService {
  
     }
 
+    extractJwt(req: Request){
+        const [type, token] = req.headers.get('Authorization')?.split(' ') ?? [];
+        return type === 'Bearer' ? token : undefined;
+    }
+
+    async verifyJwt(req: Request) {
+
+        const jwt = this.extractJwt(req);
+        
+        if (jwt === undefined) {
+            throw new UnauthorizedException();
+        }
+
+        try {
+            const decoded = await jose.jwtVerify(jwt, this.secret_key);
+            return decoded;
+        }
+        catch {
+            throw new HttpException('Unable to verify jwt',
+                HttpStatus.UNAUTHORIZED);
+        }
+    }
+
     async login(@Body() authDto: AuthDto) {
     
         const user = await this.userService.findUserByUsername(authDto.username);
@@ -65,7 +88,15 @@ export class AuthService {
             throw new HttpException('Username or password is incorrect',
                 HttpStatus.BAD_REQUEST);
         }
+
+        // verify password
+        const match = await bcrypt.compare(authDto.password, user.password);
         
+        if (!match) {
+            throw new HttpException('Username or password is incorrect',
+                HttpStatus.BAD_REQUEST);
+        }
+
         const token = await this._genJwt({
             username: user.username,
             id: user.id
@@ -74,4 +105,5 @@ export class AuthService {
         return {token};
         
     }
+
 }
