@@ -32,10 +32,6 @@ export class AuthService {
         
         try {
             await this.userService.createUser(authDto);
-            // const jwt = await this._genJwt({
-            //     username: user.username,
-            //     id: user.id
-            // });
             return true;
         }
         catch (e) {
@@ -52,9 +48,9 @@ export class AuthService {
     async _genJwt(payload: object) {
         
         return new jose.SignJWT(payload as jose.JWTPayload)
-            .setProtectedHeader({ alg: "HS256" }) // Set algorithm
-            .setIssuedAt() // Adds the "iat" (issued at) field
-            .setExpirationTime("1h") // Expires in 1 hour
+            .setProtectedHeader({ alg: "HS256" })
+            .setIssuedAt()
+            .setExpirationTime("1h")
             .sign(this.secret_key);
  
     }
@@ -77,7 +73,7 @@ export class AuthService {
             return decoded;
         }
         catch {
-            throw new HttpException(`Unable to verify jwt ${jwt}`,
+            throw new HttpException(`Unable to verify jwt`,
                 HttpStatus.UNAUTHORIZED);
         }
     }
@@ -85,10 +81,9 @@ export class AuthService {
     async login(@Body() authDto: AuthDto) {
         
         const user = await this.userService.findUserByUsername(authDto.username);
-        const users = await this.userService.getAllUsers(); 
 
         if (user === null) {
-            throw new HttpException(`Username or password is incorrect ${users.length}`,
+            throw new HttpException(`Username or password is incorrect`,
                 HttpStatus.BAD_REQUEST);
         }
 
