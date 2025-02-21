@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from "@nestjs/common";
 import { TaskService } from "./task.service";
 import { TaskCreate, TaskUpdate } from "./task.dto";
-import { AuthGuard } from "src/auth/auth.guard";
+import { AuthGuard } from "../auth/auth.guard";
 
 @UseGuards(AuthGuard)
 @Controller('tasks')
@@ -24,7 +24,6 @@ export class TasksController {
     async updateTask(@Body() taskUpdate : TaskUpdate, @Param('id') id: string){
         const updatedTask = await this.taskService.editTask(id, taskUpdate);
         return { updatedTask };
-        
     }
 
     @Delete(':id')

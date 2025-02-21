@@ -1,4 +1,4 @@
-import { CanActivate, ExecutionContext, HttpException, Injectable, InternalServerErrorException } from "@nestjs/common";
+import { CanActivate, ExecutionContext, HttpException, Injectable, UnauthorizedException } from "@nestjs/common";
 import { AuthService } from "./auth.service";
 
 @Injectable()
@@ -18,7 +18,7 @@ export class AuthGuard implements CanActivate {
             if (e instanceof HttpException){
                 throw e
             }
-            throw new InternalServerErrorException()
+            throw new UnauthorizedException()
         }
     }
 

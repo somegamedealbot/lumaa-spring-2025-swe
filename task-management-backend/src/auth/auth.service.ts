@@ -1,12 +1,14 @@
-import { Body, HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
+import { Body, HttpException, HttpStatus, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { randomBytes } from 'crypto';
 import * as jose from 'jose';
-import bcrypt from 'bcryptjs';
-import { UserService } from 'src/user/user.service';
+import * as bcrypt from 'bcryptjs';
+import { UserService } from '../user/user.service';
+import { AuthDto } from '../user/user.dto';
 
 @Injectable()
 export class AuthService {
     secret_key: Buffer;
+    private readonly logger = new Logger(AuthService.name);
 
     constructor(private userService: UserService) {
         // generate and store secret key
@@ -18,7 +20,7 @@ export class AuthService {
         // check if username already exists
         const res = await this.userService.findUserByUsername(authDto.username);
         
-        if (res == null) {
+        if (res !== null) {
             throw new HttpException({
                 error: 'Username already exists'
             },
@@ -29,12 +31,12 @@ export class AuthService {
         authDto.password = await bcrypt.hash(authDto.password, 16)
         
         try {
-            const user = await this.userService.createUser(authDto);
-            const jwt = await this._genJwt({
-                username: user.username,
-                id: user.id
-            });
-            return jwt;
+            await this.userService.createUser(authDto);
+            // const jwt = await this._genJwt({
+            //     username: user.username,
+            //     id: user.id
+            // });
+            return true;
         }
         catch (e) {
             const message = e instanceof Error ? e.message : ''
@@ -58,7 +60,7 @@ export class AuthService {
     }
 
     extractJwt(req: Request){
-        const [type, token] = req.headers.get('Authorization')?.split(' ') ?? [];
+        const [type, token] = (req.headers['authorization'] as string) ?.split(' ') ?? [];
         return type === 'Bearer' ? token : undefined;
     }
 
@@ -75,17 +77,18 @@ export class AuthService {
             return decoded;
         }
         catch {
-            throw new HttpException('Unable to verify jwt',
+            throw new HttpException(`Unable to verify jwt ${jwt}`,
                 HttpStatus.UNAUTHORIZED);
         }
     }
 
     async login(@Body() authDto: AuthDto) {
-    
-        const user = await this.userService.findUserByUsername(authDto.username);
         
-        if (user == null) {
-            throw new HttpException('Username or password is incorrect',
+        const user = await this.userService.findUserByUsername(authDto.username);
+        const users = await this.userService.getAllUsers(); 
+
+        if (user === null) {
+            throw new HttpException(`Username or password is incorrect ${users.length}`,
                 HttpStatus.BAD_REQUEST);
         }
 
@@ -102,7 +105,7 @@ export class AuthService {
             id: user.id
         });
 
-        return {token};
+        return token;
         
     }
 

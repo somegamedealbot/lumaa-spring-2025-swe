@@ -3,9 +3,13 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { AuthModule } from './auth/auth.module';
+import { TaskModule } from './tasks/task.module';
+import { UserEntity } from './user/user.entity';
+import { TaskEntity } from './tasks/task.entity';
 
 @Module({
-  imports: [ 
+  imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: ['.env', '../.env']
@@ -19,11 +23,12 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
         port: configService.get<number>("PG_PORT"), // Use '+' to convert to number
         username: configService.get<string>("PG_USER"),
         password: configService.get<string>("PG_PASSWORD"),
-        database: configService.get<string>("PG_USER_DB"),
-        entities: [],
-        synchronize: true,
+        database: configService.get<string>("PG_DB"),
+        entities: [UserEntity, TaskEntity],
+        synchronize: true
       })
     }),
+    AuthModule, TaskModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -1,5 +1,6 @@
 import { Body, Controller, Post} from "@nestjs/common";
 import { AuthService } from "./auth.service";
+import { AuthDto } from "../user/user.dto";
 
 
 @Controller('auth')
@@ -11,8 +12,8 @@ export class AuthController {
 
     @Post('register')
     async register(@Body() authDto: AuthDto) {
-        const jwt = await this.authService.createUser(authDto);
-        return { access_token: jwt };
+        const registered = await this.authService.createUser(authDto);
+        return { registered };
     }
 
     @Post('login')
