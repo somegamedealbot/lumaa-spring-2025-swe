@@ -1,44 +1,42 @@
 import axios from "axios";
 import React, {Dispatch, useEffect, useState} from "react";
 import toast from "react-hot-toast";
-import { TaskProps } from "./task";
-
+import { Task, TaskItem } from "./task";
 
 interface TasksProps {
     setIsAuth: Dispatch<React.SetStateAction<boolean>>
 }
 
-export type Op = 'add' | 'update' | 'delete';
+export type TaskOperation = 'add' | 'update' | 'delete';
+export type TaskFormData = AddFormData | UpdateFormData | undefined
+
+export interface AddFormData {
+    title: string
+    description: string
+}
+export interface UpdateFormData {
+    completeStatus: boolean;
+    newTitle: string;
+    newDescription: string;
+}
 
 const taskAxios = axios.create({
-    baseURL: import.meta.env.VITE_API_SERVER,
-    headers: {
-        'Authorization': 'Bearer ' + localStorage.getItem('jwt')
+    baseURL: import.meta.env.VITE_API_SERVER
+});
+
+taskAxios.interceptors.request.use((config) => {
+    const jwt = localStorage.getItem('jwt');
+    if (jwt) {
+        config.headers.Authorization = `Bearer ${jwt}`
     }
-})
-
-interface AddFormData {
-    title: string
-    description: string | undefined
-}
-
-export interface UpdateFormData {
-    changeCompleteStatus: boolean;
-    newTitle: string | undefined;
-    newDescription: string | undefined;
-}
+    return config;
+}, (err) => Promise.reject(err));
 
 export const Tasks : React.FC<TasksProps> = ({setIsAuth}) => {
-    const [tasks, setTasks] = useState([] as TaskProps[]);
+    const [taskItems, setTasks] = useState([] as TaskItem[]);
     const [addTaskForm, setAddTaskForm] = useState<AddFormData>({ title:"", description:"" });
-    const [updateTaskForm, setUpdateTaskForm] = useState<UpdateFormData>({
-        changeCompleteStatus: false,
-        newTitle: "",
-        newDescription: ""
-    });
 
     useEffect(() => {
-        // get tasks
         taskAxios.get(import.meta.env.VITE_API_SERVER + '/tasks',)
         .then((res) => {
             if (res.status === 200) {
@@ -50,21 +48,26 @@ export const Tasks : React.FC<TasksProps> = ({setIsAuth}) => {
             }
         })
     }, [setTasks])
-
-    const changeField = (e : React.ChangeEvent<HTMLInputElement>) => {
+  
+    const changeField = <T extends TaskFormData>
+    (e : React.ChangeEvent<HTMLInputElement>, formData : T) => {
         const newFormData = {
-            ...addTaskForm,
+            ...formData,
             [e.target.name]: e.target.value
         };
-        setAddTaskForm(newFormData);
+        if (e.target.name === 'completeStatus') {
+            newFormData['completeStatus'] = e.target.checked
+        };
+        return newFormData;
     }
 
-    const updateTasksList = async (id: string, operation: Op) => {
-        let newTasks : TaskProps[] = []
+    const updateTasksList = async <T extends TaskFormData>
+    (id : string, operation : TaskOperation, formData : T = undefined as T) => {
+        let newTasks : TaskItem[] = []
         if (operation === 'add') {
-            const res = await taskAxios.post('/tasks', addTaskForm)
+            const res = await taskAxios.post('/tasks', formData)
             if (res.status === 201) {
-                newTasks = [...tasks];
+                newTasks = [...taskItems];
                 newTasks.push(res.data.task)
                 toast.success('Successful created new task')
             }
@@ -73,10 +76,13 @@ export const Tasks : React.FC<TasksProps> = ({setIsAuth}) => {
             }
         }
         else if (operation === 'update'){
-            const res = await taskAxios.put('/tasks/' + id, updateTaskForm)
+            const res = await taskAxios.put('/tasks/' + id, formData)
             if (res.status === 200) {
-
-                toast.success('Successfully created new task');
+                const updateIndex = taskItems.findIndex(
+                    (task) => task.id === res.data.updatedTask.id);
+                newTasks = [...taskItems]
+                newTasks[updateIndex] = res.data.updatedTask
+                toast.success('Successfully edited task');
             }
             else {
                 toast.error(res.data.message ? res.data.message : 'Unable to update task');
@@ -85,7 +91,7 @@ export const Tasks : React.FC<TasksProps> = ({setIsAuth}) => {
         else {
             const res = await taskAxios.delete('/tasks/' + id)
             if (res.status === 200) {
-                newTasks = tasks.filter(task => task.id !== id);
+                newTasks = taskItems.filter(task => task.id !== id);
                 toast.success('Successfully deleted task');
             }
             else {
@@ -93,36 +99,43 @@ export const Tasks : React.FC<TasksProps> = ({setIsAuth}) => {
             }
         }
 
-        setTasks(newTasks)
+        setTasks(newTasks);
     }
 
     return (<>
-        {/** Log out button*/}
-
         <button onClick={() => {
             localStorage.removeItem('jwt');
             setIsAuth(false);
         }}>Logout</button>  
-        <h2>Tasks </h2> 
 
         <div>
             <h4>Add Task</h4>
             <form onSubmit={(e) => {
                 e.preventDefault();
-                updateTasksList("", "add");
+                updateTasksList("", "add", addTaskForm);
             }}>
                 <div>
                     <input type="text" name="title" placeholder="Title" 
-                        onChange={changeField} value={addTaskForm.title}/>
+                        onChange={(e) => setAddTaskForm(changeField(e, addTaskForm))} value={addTaskForm.title} required={true}/>
                 </div>
                 <div>
                     <input type="text" name="description" placeholder="Desription" 
-                        onChange={changeField} value={addTaskForm.description}/>
+                        onChange={(e) => setAddTaskForm(changeField(e, addTaskForm))} value={addTaskForm.description}/>
                 </div>
                 <div>
                     <button type="submit">Add Task</button>
                 </div>
             </form>
         </div>
+        <h2>Tasks</h2>
+        <div>
+            <ul>
+                {taskItems.map((task) => 
+                    <Task key={task.id} task={task} updateTasksList={updateTasksList}
+                        changeField={changeField}>
+                    </Task>
+                )}
+            </ul>
+        </div> 
     </>)
 }

@@ -11,7 +11,7 @@ export class TaskCreate {
 }
 
 export class TaskUpdate {
-    changeCompleteStatus: boolean;
-    newTitle: string | undefined;
-    newDescription: string | undefined;
+    completeStatus: boolean;
+    newTitle: string;
+    newDescription: string;
 }

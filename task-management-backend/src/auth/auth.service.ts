@@ -1,21 +1,21 @@
-import { Body, HttpException, HttpStatus, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
-import { randomBytes } from 'crypto';
+import { Body, HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
 import * as jose from 'jose';
 import * as bcrypt from 'bcryptjs';
 import { UserService } from '../user/user.service';
-import { AuthDto } from '../user/user.dto';
+import { UserDto } from '../user/user.dto';
 
 @Injectable()
 export class AuthService {
-    secret_key: Buffer;
-    private readonly logger = new Logger(AuthService.name);
+    secret_key: Uint8Array;
+    // private readonly logger = new Logger(AuthService.name);
 
     constructor(private userService: UserService) {
         // generate and store secret key
-        this.secret_key = randomBytes(32);
+        console.log()
+        this.secret_key = new TextEncoder().encode(process.env.SECRET_KEY as string);
     }
 
-    async createUser(@Body() authDto: AuthDto){
+    async createUser(@Body() authDto: UserDto){
 
         // check if username already exists
         const res = await this.userService.findUserByUsername(authDto.username);
@@ -50,7 +50,6 @@ export class AuthService {
         return new jose.SignJWT(payload as jose.JWTPayload)
             .setProtectedHeader({ alg: "HS256" })
             .setIssuedAt()
-            .setExpirationTime("1h")
             .sign(this.secret_key);
  
     }
@@ -78,7 +77,7 @@ export class AuthService {
         }
     }
 
-    async login(@Body() authDto: AuthDto) {
+    async login(@Body() authDto: UserDto) {
         
         const user = await this.userService.findUserByUsername(authDto.username);
 

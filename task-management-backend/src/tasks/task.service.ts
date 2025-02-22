@@ -44,11 +44,10 @@ export class TaskService {
 
         // update task if found
         if (task !== null) {
-            
             try {
-                task.isComplete = update.changeCompleteStatus ? !task.isComplete : task.isComplete;
+                task.isComplete = update.completeStatus;
                 task.title = update.newTitle ? update.newTitle : task.title;
-                task.description = update.newDescription ? update.newDescription : task.description;
+                task.description = update.newDescription;
                 await this.taskRepo.save(task);
                 return task
             }
@@ -86,7 +85,5 @@ export class TaskService {
         
         return false
     }
-
-
 
 }

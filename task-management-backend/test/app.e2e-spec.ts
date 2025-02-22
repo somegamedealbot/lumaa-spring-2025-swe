@@ -42,7 +42,7 @@ const password = 'testingpassword';
 let access_token : string = '';
 
 describe('Login and Signup', () => {
-  it('signup', async () => {
+  it('Sign Up', async () => {
     const res = await request(app.getHttpServer())
       .post('/auth/register')
       .type('form')
@@ -52,7 +52,7 @@ describe('Login and Signup', () => {
     expect(res.body).toHaveProperty('registered', true);
   })
 
-  it('login', async () => {
+  it('Login', async () => {
     const res = await request(app.getHttpServer())
       .post('/auth/login')
       .type('form')
@@ -80,7 +80,7 @@ describe('Simple tasks tests', () => {
   const taskUpdate : TaskUpdate = {
     newTitle: 'test task (updated)',
     newDescription: 'new description',
-    changeCompleteStatus: true
+    completeStatus: true
   }
   let updatedTask : TaskEntity | undefined = undefined; 
 

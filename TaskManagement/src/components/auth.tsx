@@ -15,7 +15,6 @@ interface AuthProps {
 export const Auth : React.FC<AuthProps> = ({setIsAuth}) => {
     const [isSignUp, setIsSignUp] = useState<boolean>(false);
     const [formData, setFormData] = useState<FormData>({ username: "", password: "" });
-    const [fieldError, setFieldError] = useState<string>('');
 
     const changeField = (e : React.ChangeEvent<HTMLInputElement>) => {
         const newFormData = {
@@ -27,10 +26,6 @@ export const Auth : React.FC<AuthProps> = ({setIsAuth}) => {
 
     const submitHandler = async (e : React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
-
-        if (formData.username === "" || formData.password === ""){
-            setFieldError('Missing one or more fields');
-        }
 
         const res = await axios.post(import.meta.env.VITE_API_SERVER + 
             `/auth/${isSignUp ? 'register' : 'login'}`, formData);
@@ -57,15 +52,12 @@ export const Auth : React.FC<AuthProps> = ({setIsAuth}) => {
         <h2>{isSignUp ? 'Sign Up' : 'Login'}</h2>
         <form onSubmit={submitHandler}>
             <div>
-                <h3>{fieldError}</h3>
-            </div>
-            <div>
                 <input type="text" name="username" placeholder="Username" 
-                    onChange={changeField} value={formData.username}/>
+                    onChange={changeField} value={formData.username} required={true}/>
             </div>
             <div>
                 <input type="password" name="password" placeholder="Password" 
-                    onChange={changeField} value={formData.password}/>
+                    onChange={changeField} value={formData.password} required={true}/>
             </div>
             <div>
                 <button type="submit">{isSignUp ? 'Register' : 'Login'}</button>
