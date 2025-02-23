@@ -11,7 +11,6 @@ export class AuthService {
 
     constructor(private userService: UserService) {
         // generate and store secret key
-        console.log()
         this.secret_key = new TextEncoder().encode(process.env.SECRET_KEY as string);
     }
 

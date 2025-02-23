@@ -48,7 +48,7 @@ NEST_PORT=3000  # port for NestJS
 
 ### 3. Running React App
 
-1. Back out of the NestJS directory and go into React app `cd TaskManagement`
+1. Back out of the NestJS directory and go into React app `cd task-management-backend`
 
 2. `npm install` to install all necessary packages.
 
